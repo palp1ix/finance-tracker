@@ -57,7 +57,7 @@ export async function chatCompletion(
           'Content-Type': 'application/json',
           Authorization: `Bearer ${key}`,
           'HTTP-Referer': typeof location !== 'undefined' ? location.origin : 'https://traty.app',
-          'X-Title': 'Траты — заметки с ИИ',
+          'X-Title': 'Traty',
         },
         body: JSON.stringify({ model, messages, response_format: { type: 'json_object' } }),
         signal: controller.signal,

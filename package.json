@@ -6,22 +6,20 @@
   "description": "Траты — заметки о покупках с ИИ-аналитикой (local-first PWA)",
   "scripts": {
     "dev": "vite",
-    "build": "tsc -b && vite build",
+    "build": "tsc --noEmit -p tsconfig.json && vite build",
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
     "e2e": "playwright test",
-    "typecheck": "tsc -b --noEmit"
+    "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p tsconfig.node.json"
   },
   "dependencies": {
     "dexie": "^4.0.8",
     "dexie-react-hooks": "^1.1.7",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
+    "workbox-window": "^7.4.1",
     "zod": "^3.23.8"
-  },
-  "pnpm": {
-    "onlyBuiltDependencies": ["esbuild"]
   },
   "devDependencies": {
     "@playwright/test": "^1.48.2",

@@ -4,6 +4,9 @@ import tailwindcss from '@tailwindcss/vite';
 import { VitePWA } from 'vite-plugin-pwa';
 
 export default defineConfig({
+  // Относительные пути — чтобы сборка работала на GitHub Pages из подпапки
+  // (https://user.github.io/repo/) и на любом статическом хостинге.
+  base: './',
   plugins: [
     react(),
     tailwindcss(),
@@ -15,17 +18,17 @@ export default defineConfig({
         short_name: 'Траты',
         description: 'Заметки о покупках с ИИ-аналитикой. Данные хранятся только на устройстве.',
         lang: 'ru',
-        start_url: '/',
-        scope: '/',
+        start_url: './',
+        scope: './',
         display: 'standalone',
         orientation: 'portrait',
         background_color: '#F4F5FB',
         theme_color: '#5B5BF0',
         icons: [
-          { src: 'icons/icon-192.png', sizes: '192x192', type: 'image/png' },
-          { src: 'icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: './icons/icon-192.png', sizes: '192x192', type: 'image/png' },
+          { src: './icons/icon-512.png', sizes: '512x512', type: 'image/png' },
           {
-            src: 'icons/icon-maskable-512.png',
+            src: './icons/icon-maskable-512.png',
             sizes: '512x512',
             type: 'image/png',
             purpose: 'maskable',
@@ -34,17 +37,7 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
-        navigateFallback: '/index.html',
-        runtimeCaching: [
-          {
-            urlPattern: ({ url }) => url.origin === 'https://openrouter.ai',
-            handler: 'NetworkFirst',
-            options: {
-              cacheName: 'openrouter-api',
-              networkTimeoutSeconds: 10,
-            },
-          },
-        ],
+        navigateFallback: 'index.html',
       },
     }),
   ],
