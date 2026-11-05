@@ -35,3 +35,14 @@ export function recoverSourceMonths(data){
  }
  return data;
 }
+
+export function bufferEntryDay(entry){
+ if(entry.bufferedDay){try{const d=normalizePurchaseDate(entry.bufferedDay);if(d.occurredPrecision==='day')return d.occurredAt}catch{}}
+ if(!entry.createdAt)return null;const d=new Date(entry.createdAt);if(Number.isNaN(d.getTime()))return null;
+ return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+}
+export function defaultEntryDates(entry,drafts){
+ if(entry.source==='transactions-import'||entry.rawText.split(/\r?\n/).filter(line=>line.trim()).length!==1)return drafts;
+ const day=bufferEntryDay(entry);if(!day)return drafts;
+ return drafts.map(d=>d.occurredAt?d:{...d,occurredAt:day,occurredPrecision:'day',dateSource:'buffer'});
+}

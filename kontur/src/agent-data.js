@@ -1,4 +1,4 @@
-import {requirePurchaseDate} from './dates.js';
+import {requirePurchaseDate,bufferEntryDay} from './dates.js';
 export const dateRevision=t=>({occurredAt:t.occurredAt??null,occurredPrecision:t.occurredPrecision??null,updatedAt:t.updatedAt??null});
 // Atomic, date-only patches. Other transaction fields are never accepted from an agent.
 export function applyDateChanges(data,changes,at=new Date().toISOString()){
@@ -12,4 +12,4 @@ export function applyDateChanges(data,changes,at=new Date().toISOString()){
  }
  return next;
 }
-export function agentSnapshot(data,today){return {version:2,today,categories:data.categories,entries:data.entries.map(e=>({id:e.id,rawText:e.rawText,status:e.status||'pending'})),transactions:data.transactions.map(t=>({...t,before:dateRevision(t)}))}}
+export function agentSnapshot(data,today){return {version:2,today,categories:data.categories,entries:data.entries.map(e=>({id:e.id,rawText:e.rawText,status:e.status||'pending',createdAt:e.createdAt,bufferedDay:bufferEntryDay(e)})),transactions:data.transactions.map(t=>({...t,before:dateRevision(t)}))}}
