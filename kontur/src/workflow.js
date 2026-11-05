@@ -1,4 +1,4 @@
-import {requirePurchaseDate,monthHeading,recoverSourceMonths} from './dates.js';
+import {requirePurchaseDate,monthHeading,recoverSourceMonths,defaultEntryDates} from './dates.js';
 import {parseAmount} from './finance.js';
 export function migrate(data) {
   if(data.version!==1) throw Error('Версия данных не поддерживается');
@@ -30,7 +30,7 @@ export function commitEntry(data,entryId,drafts,rawText,at=new Date().toISOStrin
   if(!e||e.status!=='pending') throw Error('Запись уже обработана или удалена');
   if(e.rawText!==rawText)throw Error('Запись изменилась. Разберите её заново');
   if(!Array.isArray(drafts)||!drafts.length||drafts.length>200)throw Error('Нужно от 1 до 200 операций');
-  for(const [i,d] of drafts.entries())next.transactions.push({...validateDraft(d,next.categories),id:entryId+':'+i,sourceEntryId:entryId,createdAt:at,updatedAt:at});
+  for(const [i,d] of defaultEntryDates(e,drafts).entries())next.transactions.push({...validateDraft(d,next.categories),id:entryId+':'+i,sourceEntryId:entryId,createdAt:at,updatedAt:at});
   e.status='processed';e.processedAt=at;e.updatedAt=at;
   return next;
 }

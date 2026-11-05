@@ -51,3 +51,7 @@ export function analyze(transactions,{currency='BYN',bounds,category=null}={}) {
   return {current,expense,income,refund,previousExpense,categories,days,unknown,monthOnly,netExpense:expense-refund,cashFlow:income+refund-expense};
 }
 export function percent(part,total){if(total===0n)return 0; return Number((part*1000n)/total)/10;}
+
+export function selectPurchases(transactions,{currency,category=null,day=null,bounds}={}){
+ return transactions.filter(t=>t.type==='expense'&&(!currency||t.currency===currency)&&(!category||(t.category||'Без категории')===category)&&(!bounds||(!bounds.start&&!bounds.end)||inPeriod(t,bounds.start,bounds.end))&&(!day||(t.occurredAt===day&&t.occurredPrecision!=='unknown'&&t.occurredPrecision!=='month'))).slice().sort((a,b)=>(b.occurredAt||'').localeCompare(a.occurredAt||''));
+}

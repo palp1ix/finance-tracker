@@ -102,3 +102,17 @@ input:focus,textarea:focus,select:focus{border-color:#aaa}
 :root[data-theme=light] .cash-tabs{background:#00000004;border-color:#00000008}:root[data-theme=light] .cash-tabs button[aria-pressed=true]{background:#0000000a;color:#222}:root[data-theme=light] .cash-tabs button:hover{color:#222}
 :root[data-theme=light] .cash-bar{background:linear-gradient(180deg,#6a6a68,#aaa)}:root[data-theme=light] .cash-column.is-active .cash-bar{background:linear-gradient(180deg,#333,#777)}:root[data-theme=light] .cash-column:before{background:#00000004}:root[data-theme=light] .cash-plot{border-color:#00000008}
 :root[data-theme=light] .cash-tooltip{background:#fffffff5;border-color:#ddd}:root[data-theme=light] .cash-tooltip>strong,:root[data-theme=light] .cash-tooltip b{color:#222}:root[data-theme=light] .cash-tooltip span{color:#666}
+/* Keep mobile controls centered and reserve the status-bar area before any content. */
+body{padding-top:env(safe-area-inset-top,0px)}
+.topbar{padding-top:0;height:64px;position:relative;z-index:3;background:#141415}
+:root[data-theme=light] .topbar{background:#fafafa}
+.add-button .button-label{display:inline}.add-button>svg{display:block;transform:none!important}
+.analytics-detail{scroll-margin-top:calc(env(safe-area-inset-top,0px) + 20px)}
+.purchases-back{margin:0 0 16px;padding-left:0}.purchase-total{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:20px 24px;margin-bottom:16px}.purchase-total strong{font-size:22px;font-weight:500}
+.ai-progress{display:flex;align-items:center;gap:12px;margin-top:16px;padding:14px 16px;background:#ffffff05;border:1px solid #ffffff0a;border-radius:8px}
+.ai-progress>div{min-width:0;flex:1;display:grid;gap:5px}.ai-progress strong{font-size:13px;font-weight:500}.ai-progress small{font-size:12px;line-height:1.5}.ai-progress .text-button{flex:none;color:inherit}
+.loading-spinner{display:inline-block;width:18px;height:18px;border:2px solid #ffffff25;border-top-color:#d5d5d5;border-radius:50%;flex:none;animation:loading-turn .8s linear infinite}
+@keyframes loading-turn{to{transform:rotate(360deg)}}
+:root[data-theme=light] .ai-progress{background:#00000003;border-color:#00000010}:root[data-theme=light] .loading-spinner{border-color:#00000020;border-top-color:#333}
+@media(max-width:760px){.topbar{height:64px;padding-block:8px}.page-heading .add-button{display:grid;place-items:center;gap:0;padding:0;width:44px;height:44px;line-height:0}.page-heading .add-button .button-label{display:none}.page-heading .add-button>svg{width:20px;height:20px;margin:0}.content{padding-top:28px}.lock-screen{min-height:calc(100svh - env(safe-area-inset-top,0px))}.ai-progress{padding:12px;gap:10px;flex-wrap:wrap}.ai-progress>div{flex-basis:calc(100% - 40px)}.ai-progress .text-button{margin-left:28px;padding-left:0}}
+@media(prefers-reduced-motion:reduce){.loading-spinner{animation:none!important;border-style:dotted}.ai-progress{border-color:#888}}
