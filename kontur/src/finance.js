@@ -1,0 +1,4 @@
+export const categories = ['Еда и перекусы','Продукты','Кафе и рестораны','Транспорт','Здоровье','Уход','Подписки и сервисы','Развлечения','Подарки','Алкоголь','Стики и вейп','Покупки','Смешанное','Прочее'];
+export function parseAmount(value) { const s = value.trim().replace(',', '.'); if (!/^\d+(?:\.\d{1,2})?$/.test(s)) throw Error('Введите сумму с не более чем двумя знаками после запятой'); const [whole, fraction = ''] = s.split('.'); const n = BigInt(whole) * 100n + BigInt((fraction + '00').slice(0, 2)); if (n <= 0n) throw Error('Сумма должна быть больше нуля'); return n.toString(); }
+export function formatAmount(minor) { const n = BigInt(minor); return `${n / 100n}.${(n % 100n).toString().padStart(2, '0')}`; }
+export function totals(transactions) { const result = {}; for (const t of transactions) { const row = result[t.currency] ||= {expense: 0n, income: 0n, refund: 0n}; if (t.type in row) row[t.type] += BigInt(t.amountMinor); } return result; }

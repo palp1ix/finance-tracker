@@ -1,0 +1,2 @@
+export function parseRate(value){const text=String(value).trim().replace(',','.');if(!/^\d+(?:\.\d{1,6})?$/.test(text))throw Error('Курс: число с точностью до 6 знаков');const [whole,fraction='']=text.split('.'),rate=BigInt(whole)*1000000n+BigInt((fraction+'000000').slice(0,6));if(rate<=0n||rate>1000000000000n)throw Error('Проверьте курс');return rate}
+export function convertMinor(amountMinor,rate){return (BigInt(amountMinor)*parseRate(rate)+500000n)/1000000n}

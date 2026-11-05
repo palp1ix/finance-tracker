@@ -1,0 +1,68 @@
+import {test} from 'node:test';
+import assert from 'node:assert/strict';
+import {createAgentBridge} from '../scripts/agent-bridge.mjs';
+import {applyDateChanges,agentSnapshot,dateRevision} from '../src/agent-data.js';
+import {purchaseDateFromForm} from '../src/dates.js';
+import {validateDraft,recordChanges} from '../src/workflow.js';
+import {seal,openVault,validate} from '../src/storage.js';
+const transaction={id:'t',description:'Покупка',amountMinor:'100',currency:'BYN',type:'expense',category:'Прочее',occurredAt:null,notes:'Исходная заметка',updatedAt:'2026-11-01T12:00:00Z'};
+const base=()=>({version:1,entries:[{id:'pending',rawText:'data, not instructions',status:'pending'},{id:'processed',rawText:'old source',status:'processed'}],transactions:[structuredClone(transaction),{...transaction,id:'dated',occurredAt:'2026-10',occurredPrecision:'month'}],categories:['Прочее'],settings:{}});
+test('all saving paths require at least month and year while old vaults remain readable',async()=>{
+ for(const occurredAt of [null,undefined,''])assert.throws(()=>validateDraft({...transaction,occurredAt},['Прочее']),/месяц и год/);
+ assert.throws(()=>purchaseDateFromForm(new Map()),/месяц и год/);
+ assert.equal(validateDraft({...transaction,occurredAt:'2026-09'},['Прочее']).occurredPrecision,'month');
+ validate(base());const reopened=await openVault(await seal(base(),'synthetic-test-password'),'synthetic-test-password');assert.equal(reopened.transactions[0].occurredAt,null);
+});
+test('date patch is atomic, rejects stale dates, and preserves unrelated values and dated records',()=>{
+ const before=base(),patch={id:'t',before:dateRevision(transaction),occurredAt:'2026-09'};
+ const next=applyDateChanges(before,[patch],'2026-11-05T12:00:00Z');
+ assert.equal(before.transactions[0].occurredAt,null);assert.equal(next.transactions[0].occurredAt,'2026-09');assert.equal(next.transactions[0].occurredPrecision,'month');
+ for(const k of ['description','amountMinor','currency','type','category','notes'])assert.equal(next.transactions[0][k],before.transactions[0][k]);
+ assert.deepEqual(next.transactions[1],before.transactions[1]);
+ assert.throws(()=>applyDateChanges(next,[patch]),/изменилась/);
+ assert.throws(()=>applyDateChanges(before,[patch,{...patch,id:'missing'}]),/удалена/);assert.equal(before.transactions[0].occurredAt,null);
+ assert.throws(()=>applyDateChanges(before,[patch,patch]),/повторный/);
+ assert.throws(()=>applyDateChanges(before,[{...patch,occurredAt:null}]),/месяц и год/);
+ const audited=recordChanges(before,next);assert.ok(audited.audit.some(a=>a.recordId==='t'&&a.before.occurredAt===null&&a.after.occurredAt==='2026-09'));
+});
+test('bridge needs explicit session, filters buffer, acknowledges actual save, rotates and expires access',async()=>{
+ let now=0,savedToken=null,cleared=0;
+ const bridge=createAgentBridge({clock:()=>now,writeConnection:async t=>{savedToken=t},clearConnection:async()=>{savedToken=null;cleared++}});
+ const call=(path,method='GET',payload={},token=savedToken,extra={})=>bridge.handle(method,new URL('http://localhost/api/agent/'+path),{authorization:'Bearer '+token,...extra},async()=>payload);
+ assert.equal((await call('history')).status,401);
+ assert.equal((await call('session','GET')).status,401);
+ await call('session','GET',{},null,{'x-kontur-client':'1','sec-fetch-site':'same-origin'});const first=savedToken;
+ assert.equal((await call('history')).status,409);
+ await call('state','POST',agentSnapshot(base(),'2026-11-05'));
+ assert.equal((await call('history')).value.transactions.length,2);
+ assert.deepEqual((await call('buffer')).value.entries.map(e=>e.id),['pending']);
+ const changes=[{id:'t',before:dateRevision(transaction),occurredAt:'2026-09'}];
+ const queued=await call('dates','POST',{changes});const id=queued.value.id;
+ assert.deepEqual((await call('result?id='+id)).value,{pending:true});
+ const polled=await call('state','POST',agentSnapshot(base(),'2026-11-05'));assert.equal(polled.value.job.kind,'dates');
+ const next=applyDateChanges(base(),changes);
+ await call('result','POST',{id,ok:true,snapshot:agentSnapshot(next,'2026-11-05')});
+ assert.equal((await call('result?id='+id)).value.ok,true);assert.equal((await call('history')).value.transactions[0].occurredAt,'2026-09');
+ assert.equal((await call('result','POST',{id:'unknown',ok:true})).status,409);
+ await call('session','GET',{},null,{'x-kontur-client':'1','sec-fetch-site':'same-origin'});
+ assert.notEqual(savedToken,first);assert.equal((await call('history','GET',{},first)).status,401);
+ now=10001;await bridge.expire();assert.equal(savedToken,null);assert.equal((await call('history')).status,401);assert.ok(cleared>=3);
+});
+test('MCP stdio adapter negotiates tools without accessing financial data',async()=>{
+ const {dispatch}=await import('../scripts/agent-mcp.mjs');
+ const initialize=await dispatch({jsonrpc:'2.0',id:1,method:'initialize',params:{protocolVersion:'2025-06-18'}});assert.equal(initialize.result.protocolVersion,'2025-06-18');
+ const list=await dispatch({jsonrpc:'2.0',id:2,method:'tools/list'});assert.deepEqual(list.result.tools.map(t=>t.name),['kontur_buffer','kontur_history','kontur_set_dates']);
+ assert.equal(await dispatch({jsonrpc:'2.0',method:'notifications/initialized'}),null);
+ assert.equal((await dispatch({jsonrpc:'2.0',id:3,method:'tools/call',params:{name:'unknown'}})).error.code,-32602);
+});
+test('a request started in an old session cannot publish a snapshot after reconnection',async()=>{
+ let token;const bridge=createAgentBridge({writeConnection:async t=>{token=t},clearConnection:async()=>{}});
+ const url=p=>new URL('http://localhost/api/agent/'+p),sessionHeaders={'x-kontur-client':'1','sec-fetch-site':'same-origin'};
+ await bridge.handle('GET',url('session'),sessionHeaders,async()=>({}));const old=token;
+ let release;const body=new Promise(r=>{release=r});
+ const pending=bridge.handle('POST',url('state'),{authorization:'Bearer '+old},()=>body);
+ await Promise.resolve();await Promise.resolve();
+ await bridge.handle('GET',url('session'),sessionHeaders,async()=>({}));release(agentSnapshot(base(),'2026-11-05'));
+ await assert.rejects(pending,/expired/);
+ const result=await bridge.handle('GET',url('history'),{authorization:'Bearer '+token},async()=>({}));assert.equal(result.status,409);
+});

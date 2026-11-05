@@ -1,0 +1,7 @@
+dist/
+node_modules/
+.agent-connection.json
+.env*
+.wrangler/
+.dev.vars*
+*.kontursync

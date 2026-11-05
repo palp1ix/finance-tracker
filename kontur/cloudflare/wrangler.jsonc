@@ -1,0 +1,8 @@
+{
+  "name": "kontur-sync",
+  "main": "worker.js",
+  "compatibility_date": "2026-11-05",
+  "workers_dev": true,
+  "vars": {"ALLOWED_ORIGINS": "https://palp1ix.github.io,http://localhost:5173,http://127.0.0.1:5173"},
+  "d1_databases": [{"binding": "DB", "database_name": "kontur-vault", "database_id": "TO_BE_PROVISIONED", "migrations_dir": "migrations"}]
+}
