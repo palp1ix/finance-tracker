@@ -6,6 +6,8 @@ Static frontend on GitHub Pages, encrypted sync via a separate Cloudflare Worker
 
 Run locally: npm run dev. Test: npm test. Build: npm run build. No runtime dependencies.
 
+Live API: https://kontur-sync.palp1ix-kontur.workers.dev/api/vault (requires the private connection token).
+
 Backend: authenticate with Wrangler, create a separate kontur-vault database, put its database_id in cloudflare/wrangler.jsonc, apply migrations and deploy. SYNC_TOKEN_HASH must be set as a Worker secret. Never commit the connection token or .kontursync files.
 
 Connect phone and PC using the same private .kontursync file and master password. Import the connection in Settings on an unlocked device, or use the cloud button on the lock screen to download an existing encrypted vault. The master password stays on device.
