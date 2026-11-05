@@ -32,6 +32,12 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm run build
 
+      - run: npm test
+        working-directory: kontur
+      - run: npm run build
+        working-directory: kontur
+      - run: cp -R kontur/dist dist/kontur
+
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:

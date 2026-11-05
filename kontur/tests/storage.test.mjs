@@ -1,0 +1,3 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {seal,openVault} from '../src/storage.js';
+const data={version:1,entries:[{id:'1',rawText:'  покупка\n'}],transactions:[],categories:[]};
+test('encrypted backup round trip and password validation',async()=>{const e=await seal(data,'password123');assert.ok(!JSON.stringify(e).includes('покупка'));assert.deepEqual(await openVault(e,'password123'),data);await assert.rejects(openVault(e,'wrong'));const changed={...e,ciphertext:e.ciphertext.slice(0,-4)+'AAAA'};await assert.rejects(openVault(changed,'password123'));const other=await seal(data,'password123');assert.notEqual(e.iv,other.iv);assert.notEqual(e.salt,other.salt)});

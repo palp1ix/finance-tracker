@@ -1,0 +1,3 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {parseAmount,formatAmount,totals} from '../src/finance.js';
+test('money uses exact minor units',()=>{assert.equal(parseAmount('7,98'),'798');assert.equal(parseAmount('999999999999999.01'),'99999999999999901');assert.equal(formatAmount('798'),'7.98');assert.throws(()=>parseAmount('1.234'));assert.throws(()=>parseAmount('0'))});
+test('currencies and types stay separate',()=>{const t=totals([{currency:'BYN',type:'expense',amountMinor:'798'},{currency:'EUR',type:'expense',amountMinor:'499'},{currency:'BYN',type:'refund',amountMinor:'100'},{currency:'BYN',type:'transfer',amountMinor:'999'}]);assert.equal(t.BYN.expense,798n);assert.equal(t.BYN.refund,100n);assert.equal(t.EUR.expense,499n)});

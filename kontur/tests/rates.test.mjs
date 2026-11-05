@@ -1,0 +1,2 @@
+import {test} from 'node:test';import assert from 'node:assert/strict';import {parseRate,convertMinor} from '../src/rates.js';
+test('conversion uses integer arithmetic and rounds to nearest kopeck',()=>{assert.equal(convertMinor('100','3.2571'),326n);assert.equal(convertMinor('10000','0,035'),350n);assert.equal(parseRate('0.000001'),1n);for(const value of ['0','-1','1.1234567','NaN'])assert.throws(()=>parseRate(value))});

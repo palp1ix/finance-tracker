@@ -1,0 +1,20 @@
+import {normalizePurchaseDate} from './dates.js';
+const encoder = new TextEncoder();
+const decoder = new TextDecoder();
+const b64 = bytes => { let text = ''; for (let i = 0; i < bytes.length; i += 8192) text += String.fromCharCode(...bytes.subarray(i, i + 8192)); return btoa(text); };
+const unb64 = s => Uint8Array.from(atob(s), c => c.charCodeAt(0));
+const random = n => crypto.getRandomValues(new Uint8Array(n));
+const ITERATIONS = 600000;
+async function derive(password, salt, iterations) { const base = await crypto.subtle.importKey('raw', encoder.encode(password), 'PBKDF2', false, ['deriveKey']); return crypto.subtle.deriveKey({name:'PBKDF2', hash:'SHA-256', salt, iterations}, base, {name:'AES-GCM', length:256}, false, ['encrypt','decrypt']); }
+export async function seal(data, password) { const salt = random(16), iv = random(12); const key = await derive(password, salt, ITERATIONS); const cipher = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, encoder.encode(JSON.stringify(data))); return {format:'kontur-vault', version:1, kdf:'PBKDF2-SHA256', iterations:ITERATIONS, salt:b64(salt), iv:b64(iv), ciphertext:b64(new Uint8Array(cipher))}; }
+export async function openVault(envelope, password) { if (!envelope || envelope.format !== 'kontur-vault' || envelope.version !== 1 || envelope.kdf !== 'PBKDF2-SHA256' || envelope.iterations !== ITERATIONS) throw Error('Неподдерживаемый формат хранилища'); const key = await derive(password, unb64(envelope.salt), envelope.iterations); const plain = await crypto.subtle.decrypt({name:'AES-GCM', iv:unb64(envelope.iv)}, key, unb64(envelope.ciphertext)); const data = JSON.parse(decoder.decode(plain)); validate(data); return data; }
+export function validate(data) {
+ if(!data||data.version!==1||!Array.isArray(data.entries)||!Array.isArray(data.transactions)||!Array.isArray(data.categories)||!data.categories.every(c=>typeof c==='string'&&c.length>0&&c.length<=80))throw Error('Неверная структура данных');
+ const ids=new Set();for(const e of data.entries){if(typeof e.id!=='string'||!e.id||ids.has(e.id)||typeof e.rawText!=='string'||(e.status&&!['pending','processed'].includes(e.status)))throw Error('Повреждена запись буфера');ids.add(e.id)}
+ ids.clear();for(const t of data.transactions){if(typeof t.id!=='string'||!t.id||ids.has(t.id)||typeof t.description!=='string'||!t.description.trim()||!/^\d+$/.test(t.amountMinor)||BigInt(t.amountMinor)<=0n||!['expense','income','refund','transfer'].includes(t.type)||!['BYN','EUR','USD','RUB'].includes(t.currency))throw Error('Повреждена операция');ids.add(t.id);normalizePurchaseDate(t.occurredAt)}
+ if(data.audit&&!Array.isArray(data.audit))throw Error('Повреждён журнал изменений');
+}
+function database() { return new Promise((resolve,reject) => { const req=indexedDB.open('kontur-finance',1); req.onupgradeneeded=()=>req.result.createObjectStore('vault'); req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); }); }
+export async function readEnvelope() { const db=await database(); return new Promise((resolve,reject)=>{const tx=db.transaction('vault'); const r=tx.objectStore('vault').get('current'); r.onsuccess=()=>resolve(r.result); r.onerror=()=>reject(r.error); tx.oncomplete=()=>db.close();}); }
+export async function writeEnvelope(value,expected=undefined) { const db=await database(); return new Promise((resolve,reject)=>{const tx=db.transaction('vault','readwrite'); const store=tx.objectStore('vault');const r=store.get('current');r.onsuccess=()=>{if(expected!==undefined&&(r.result?.ciphertext||null)!==(expected?.ciphertext||null)){tx.abort();return}store.put(value,'current')}; tx.oncomplete=()=>{db.close();resolve()}; tx.onerror=()=>{db.close();reject(tx.error)}; tx.onabort=()=>{db.close();reject(tx.error || Error('Хранилище изменилось в другой вкладке. Перезагрузите страницу перед сохранением'))};}); }
+export async function deleteVault() { const db=await database(); return new Promise((resolve,reject)=>{const tx=db.transaction('vault','readwrite');tx.objectStore('vault').delete('current');tx.oncomplete=()=>{db.close();resolve()};tx.onerror=()=>reject(tx.error)}); }
