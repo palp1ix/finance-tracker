@@ -1,5 +1,5 @@
-const CACHE='kontur-v13';
-const FILES=['./','./index.html','./src/app.js?v=13','./src/style.css?v=13','./src/finance.js','./src/analytics.js','./src/charts.js','./src/agent-data.js','./src/motion.js','./src/storage.js','./src/workflow.js','./src/features.js','./src/cloud.js','./src/insights.js','./src/rates.js','./src/dates.js','./manifest.webmanifest','./icon.svg','./icons/icon-192.png','./icons/icon-512.png'];
+const CACHE='kontur-v14';
+const FILES=['./','./index.html','./src/app.js?v=14','./src/style.css?v=14','./src/finance.js','./src/analytics.js','./src/charts.js','./src/agent-data.js','./src/motion.js','./src/storage.js','./src/workflow.js','./src/features.js','./src/cloud.js','./src/insights.js','./src/rates.js','./src/dates.js','./manifest.webmanifest','./icon.svg','./icons/icon-192.png','./icons/icon-512.png'];
 self.addEventListener('install',e=>e.waitUntil(caches.open(CACHE).then(c=>c.addAll(FILES)).then(()=>self.skipWaiting())));
 self.addEventListener('activate',e=>e.waitUntil(caches.keys().then(keys=>Promise.all(keys.filter(k=>k.startsWith('kontur-')&&k!==CACHE).map(k=>caches.delete(k)))).then(()=>self.clients.claim())));
 self.addEventListener('fetch',e=>{
