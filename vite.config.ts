@@ -38,6 +38,8 @@ export default defineConfig({
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,ico,woff2}'],
         navigateFallback: 'index.html',
+        // Kontur has its own entry point and service worker.
+        navigateFallbackDenylist: [/\/kontur(?:\/|$)/],
       },
     }),
   ],
