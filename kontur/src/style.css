@@ -116,3 +116,10 @@ body{padding-top:env(safe-area-inset-top,0px)}
 :root[data-theme=light] .ai-progress{background:#00000003;border-color:#00000010}:root[data-theme=light] .loading-spinner{border-color:#00000020;border-top-color:#333}
 @media(max-width:760px){.topbar{height:64px;padding-block:8px}.page-heading .add-button{display:grid;place-items:center;gap:0;padding:0;width:44px;height:44px;line-height:0}.page-heading .add-button .button-label{display:none}.page-heading .add-button>svg{width:20px;height:20px;margin:0}.content{padding-top:28px}.lock-screen{min-height:calc(100svh - env(safe-area-inset-top,0px))}.ai-progress{padding:12px;gap:10px;flex-wrap:wrap}.ai-progress>div{flex-basis:calc(100% - 40px)}.ai-progress .text-button{margin-left:28px;padding-left:0}}
 @media(prefers-reduced-motion:reduce){.loading-spinner{animation:none!important;border-style:dotted}.ai-progress{border-color:#888}}
+/* Planning uses the existing monochrome panels and controls. */
+#budget-form { margin-top:24px; }
+#budget-form input { max-width:320px; }
+.settings-panel .transaction { flex-wrap:wrap; gap:12px; }
+.settings-panel .transaction .actions { margin:0; }
+.bottom-nav { grid-template-columns:repeat(5,1fr); }
+@media(max-width:600px){.bottom-nav button{min-width:0;padding:10px 3px}.bottom-nav button span{font-size:10px}}

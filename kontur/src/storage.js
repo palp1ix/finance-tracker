@@ -12,6 +12,11 @@ export function validate(data) {
  if(!data||data.version!==1||!Array.isArray(data.entries)||!Array.isArray(data.transactions)||!Array.isArray(data.categories)||!data.categories.every(c=>typeof c==='string'&&c.length>0&&c.length<=80))throw Error('Неверная структура данных');
  const ids=new Set();for(const e of data.entries){if(typeof e.id!=='string'||!e.id||ids.has(e.id)||typeof e.rawText!=='string'||(e.status&&!['pending','processed'].includes(e.status)))throw Error('Повреждена запись буфера');ids.add(e.id)}
  ids.clear();for(const t of data.transactions){if(typeof t.id!=='string'||!t.id||ids.has(t.id)||typeof t.description!=='string'||!t.description.trim()||!/^\d+$/.test(t.amountMinor)||BigInt(t.amountMinor)<=0n||!['expense','income','refund','transfer'].includes(t.type)||!['BYN','EUR','USD','RUB'].includes(t.currency))throw Error('Повреждена операция');ids.add(t.id);normalizePurchaseDate(t.occurredAt)}
+ const plan=data.settings?.planning;if(plan){
+ if(!Array.isArray(plan.items)||!plan.budgets||typeof plan.budgets!=='object')throw Error('Повреждён план');
+ const ids=new Set();for(const x of plan.items){if(!x.id||ids.has(x.id)||typeof x.name!=='string'||!x.name.trim()||!/^\d+$/.test(x.amountMinor)||BigInt(x.amountMinor)<=0n||!['BYN','USD','EUR','RUB'].includes(x.currency)||!['month','year','week'].includes(x.period)||!['subscription','recurring'].includes(x.kind))throw Error('Повреждён регулярный платёж');ids.add(x.id);if(x.nextDate)normalizePurchaseDate(x.nextDate)}
+ for(const [month,values] of Object.entries(plan.budgets)){normalizePurchaseDate(month);if(month.length!==7)throw Error('Неверный месяц бюджета');for(const [currency,value] of Object.entries(values))if(!['BYN','USD','EUR','RUB'].includes(currency)||!/^\d+$/.test(value)||BigInt(value)<=0n)throw Error('Повреждён бюджет')}
+ }
  if(data.audit&&!Array.isArray(data.audit))throw Error('Повреждён журнал изменений');
 }
 function database() { return new Promise((resolve,reject) => { const req=indexedDB.open('kontur-finance',1); req.onupgradeneeded=()=>req.result.createObjectStore('vault'); req.onsuccess=()=>resolve(req.result); req.onerror=()=>reject(req.error); }); }

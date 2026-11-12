@@ -1,0 +1,6 @@
+// Device-only credential: never exported or included in the vault or static sources.
+function db(){return new Promise((resolve,reject)=>{const r=indexedDB.open('kontur-device',1);r.onupgradeneeded=()=>r.result.createObjectStore('access');r.onsuccess=()=>resolve(r.result);r.onerror=()=>reject(r.error)})}
+async function access(mode,fn){const d=await db();return new Promise((resolve,reject)=>{const tx=d.transaction('access',mode);let result;const r=fn(tx.objectStore('access'));if(r)r.onsuccess=()=>{result=r.result};tx.oncomplete=()=>{d.close();resolve(result)};tx.onabort=tx.onerror=()=>{d.close();reject(tx.error)}})}
+export async function rememberDevice(password){const key=await crypto.subtle.generateKey({name:'AES-GCM',length:256},false,['encrypt','decrypt']),iv=crypto.getRandomValues(new Uint8Array(12)),cipher=await crypto.subtle.encrypt({name:'AES-GCM',iv},key,new TextEncoder().encode(password));await access('readwrite',s=>s.put({key,iv,cipher},'credential'))}
+export async function devicePassword(){const v=await access('readonly',s=>s.get('credential'));return v?new TextDecoder().decode(await crypto.subtle.decrypt({name:'AES-GCM',iv:v.iv},v.key,v.cipher)):null}
+export async function forgetDevice(){await access('readwrite',s=>s.delete('credential'))}

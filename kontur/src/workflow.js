@@ -35,7 +35,7 @@ export function commitEntry(data,entryId,drafts,rawText,at=new Date().toISOStrin
   return next;
 }
 export function recordChanges(before,after,at=new Date().toISOString()) {
-  const next=migrate(after);if(JSON.stringify(before.categories)!==JSON.stringify(next.categories))next.categoriesUpdatedAt=at;next.deleted=structuredClone(before.deleted||{entries:{},transactions:{}});
+  const next=migrate(after);if(JSON.stringify(before.settings?.planning)!==JSON.stringify(next.settings.planning))next.planningUpdatedAt=at;if(JSON.stringify(before.categories)!==JSON.stringify(next.categories))next.categoriesUpdatedAt=at;next.deleted=structuredClone(before.deleted||{entries:{},transactions:{}});
   next.audit=[...(before.audit||[])];
   for(const kind of ['entries','transactions']){
     const prev=new Map(before[kind].map(x=>[x.id,x])),cur=new Map(next[kind].map(x=>[x.id,x]));
@@ -60,6 +60,8 @@ export function mergeVaults(local,remote) {
     next[kind]=[...map.values()].filter(x=>!deleted[x.id]||(x.updatedAt||x.createdAt)>deleted[x.id]);
   }
   next.categories=(remote.categoriesUpdatedAt||'')>(local.categoriesUpdatedAt||'')?remote.categories:local.categories;next.categoriesUpdatedAt=[local.categoriesUpdatedAt||'',remote.categoriesUpdatedAt||''].sort().at(-1);
+  if(local.planningUpdatedAt&&local.planningUpdatedAt===remote.planningUpdatedAt&&JSON.stringify(local.settings.planning)!==JSON.stringify(remote.settings.planning))throw Error('План изменён одновременно на двух устройствах. Сохраните обе копии перед объединением');
+  if((remote.planningUpdatedAt||'')>(local.planningUpdatedAt||'')){next.settings.planning=structuredClone(remote.settings.planning);next.planningUpdatedAt=remote.planningUpdatedAt}
   next.audit=[...new Map([...local.audit,...remote.audit].map(x=>[x.id,x])).values()].sort((a,b)=>a.at.localeCompare(b.at));
   return next;
 }
