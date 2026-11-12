@@ -123,3 +123,15 @@ body{padding-top:env(safe-area-inset-top,0px)}
 .settings-panel .transaction .actions { margin:0; }
 .bottom-nav { grid-template-columns:repeat(5,1fr); }
 @media(max-width:600px){.bottom-nav button{min-width:0;padding:10px 3px}.bottom-nav button span{font-size:10px}}
+/* Planning rows must not inherit the two-column history layout on phones. */
+.plan-item.transaction{display:grid;grid-template-columns:minmax(0,1fr);align-items:start;gap:8px;padding-inline:0}
+.plan-item .tx-info{width:100%;min-width:0}
+.plan-item .actions{justify-content:flex-start;gap:4px 12px;width:100%}
+.plan-item .actions .text-button{white-space:normal;text-align:left;padding-inline:0;margin-right:8px}
+.plan-controls{grid-template-columns:minmax(0,1fr) minmax(0,1fr)}
+.form-grid>label{min-width:0}
+.form-grid input,.form-grid select{min-width:0;max-width:100%;box-sizing:border-box}
+input[type=month],input[type=date]{min-inline-size:0}
+.planning-banner>span:first-child{display:grid;gap:6px;flex:1;min-width:0}
+.planning-banner>span:first-child strong,.planning-banner>span:first-child small{display:block}
+@media(max-width:760px){.plan-controls{grid-template-columns:minmax(0,1fr)}.plan-item.transaction{grid-template-columns:minmax(0,1fr)}.planning-panel .hero-bottom{grid-template-columns:minmax(0,1fr)}.planning-panel .hero-bottom>div:last-child{grid-column:auto}}

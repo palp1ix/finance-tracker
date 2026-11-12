@@ -22,7 +22,7 @@ export function parseText(raw, categories, today) {
     if(/вчера/i.test(line)){const d=new Date(today+'T12:00:00');d.setDate(d.getDate()-1);occurredAt=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
     let amountMinor='';try{if(match)amountMinor=parseAmount(match[0])}catch{}
     const category=categories.find(c=>line.toLowerCase().includes(c.toLowerCase()))||(/кофе|кафе|ресторан/i.test(line)?categories.find(c=>/Кафе/.test(c)):null)||(/продукт|магазин/i.test(line)?categories.find(c=>c==='Продукты'):null)||categories.at(-1)||'Прочее';
-    return {description:clean.replace(match?.[0]||'','').replace(/BYN|USD|EUR|RUB|руб(?:лей|ля)?|р\b|\$|€/gi,'').replace(/^[\s—−-]+|[\s—−-]+$/g,'').trim()||line.trim(),amountMinor,currency,category,type:/зарплат|доход/i.test(line)?'income':/возврат/i.test(line)?'refund':/перевод/i.test(line)?'transfer':'expense',occurredAt,notes:''};
+    return {description:(match?clean.slice(0,match.index)+clean.slice(match.index+match[0].length).replace(/^\s*(?:BYN|USD|EUR|RUB|руб(?:лей|ля|ль)?|р\.?|\$|€)(?=$|[\s—−-])/iu,''):clean).replace(/(?:^|\s)(?:BYN|USD|EUR|RUB|руб(?:лей|ля|ль)?|\$|€)(?=$|[\s—−-])/giu,' ').replace(/^[\s—−-]+|[\s—−-]+$/g,'').trim()||line.trim(),amountMinor,currency,category,type:/зарплат|доход/i.test(line)?'income':/возврат/i.test(line)?'refund':/перевод/i.test(line)?'transfer':'expense',occurredAt,notes:''};
   });
 }
 export function commitEntry(data,entryId,drafts,rawText,at=new Date().toISOString()) {
